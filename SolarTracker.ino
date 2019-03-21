@@ -17,10 +17,10 @@ void setup() {
 }
 
 void loop() {
-  topleft = analogRead(A0);
-  topright = analogRead(A1);
-  downleft = analogRead(A2);
-  downright = analogRead(A3);
+  topleft = analogRead(A4);
+  topright = analogRead(A3);
+  downleft = analogRead(A5);
+  downright = analogRead(A2);
 
   if (topleft > topright) {
     OCR1A = OCR1A + 1;
