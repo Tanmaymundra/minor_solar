@@ -1,81 +1,123 @@
-#include <Servo.h>
- 
-Servo servo1;          //declare servos
-Servo servo2;
-int pos1 = 0;          // pos1 is horizontal position
-int pos2 = 0;          // pos2 is vertical position
-int right = 0;         // right ldr
-int left = 0;          // left ldr
-int centre = 0;        // centre ldr
-int up = 0;            // top ldr
-int down = 0;          // bottom ldr
- 
-int ldr1 = 0;          // map LDR's to pins
-int ldr2 = 1;
-int ldr3 = 2;
-int ldr4 = 3;
-int ldr5 = 4;
- 
+
+#include <Servo.h> // include Servo library 
+
+// 180 horizontal MAX
+Servo horizontal; // horizontal servo
+int servoh = 180;   // 90;     // stand horizontal servo
+
+int servohLimitHigh = 180;
+int servohLimitLow = 65;
+
+// 65 degrees MAX
+Servo vertical;   // vertical servo 
+int servov = 45;    //   90;     // stand vertical servo
+
+int servovLimitHigh = 80;
+int servovLimitLow = 15;
+
+
+// LDR pin connections
+//  name  = analogpin;
+int ldrlt = A4; //LDR top left - BOTTOM LEFT    <--- BDG
+int ldrrt = A3; //LDR top rigt - BOTTOM RIGHT 
+int ldrld = A5; //LDR down left - TOP LEFT
+int ldrrd = A2; //ldr down rigt - TOP RIGHT
+
 void setup()
 {
-  servo1.attach(10);      // attach servo1 to digital pin 10
-  servo1.write(90);       // set initial position as 90 deg
- 
-  servo2.attach(9);        // attach servo1 to digital pin 9
-  servo2.write(90);        // set initial position as 90 deg
- 
-  pinMode(ldr1, INPUT);      // declare LDRs as input
-  pinMode(ldr2, INPUT);
-  pinMode(ldr3, INPUT);
-  pinMode(ldr4, INPUT);
-  pinMode(ldr5, INPUT);
+  Serial.begin(9600);
+// servo connections
+// name.attacht(pin);
+  horizontal.attach(9); 
+  vertical.attach(10);
+  horizontal.write(180);
+  vertical.write(45);
+  delay(3000);
 }
- 
-void loop()
+
+void loop() 
 {
- 
-  pos1 = servo1.read();            // pos1 takes reading from current servo1 position
-  pos2 = servo2.read();            // pos2 takes reading from current servo2 position
-  int right = analogRead(ldr1);    // records reading from each LDRs
-  int centre = analogRead(ldr2);
-  int left = analogRead(ldr3);
-  int up = analogRead(ldr4);
-  int down = analogRead(ldr5);
- 
-                  // this portion is to control horizontal position
-  if(right > centre && left < centre)          // if right LDR has more light than centre LDR, and centre LDR has more light than left (means light is towards right)
+  int lt = analogRead(ldrlt); // top left
+  int rt = analogRead(ldrrt); // top right
+  int ld = analogRead(ldrld); // down left
+  int rd = analogRead(ldrrd); // down rigt
+  
+  // int dtime = analogRead(4)/20; // read potentiometers  
+  // int tol = analogRead(5)/4;
+  int dtime = 10;
+  int tol = 50;
+  
+  int avt = (lt + rt) / 2; // average value top
+  int avd = (ld + rd) / 2; // average value down
+  int avl = (lt + ld) / 2; // average value left
+  int avr = (rt + rd) / 2; // average value right
+
+  int dvert = avt - avd; // check the diffirence of up and down
+  int dhoriz = avl - avr;// check the diffirence og left and rigt
+  
+  
+  Serial.print(avt);
+  Serial.print(" ");
+  Serial.print(avd);
+  Serial.print(" ");
+  Serial.print(avl);
+  Serial.print(" ");
+  Serial.print(avr);
+  Serial.print("   ");
+  Serial.print(dtime);
+  Serial.print("   ");
+  Serial.print(tol);
+  Serial.println(" ");
+  
+    
+  if (-1*tol > dvert || dvert > tol) // check if the diffirence is in the tolerance else change vertical angle
   {
-    servo1.write(pos1 +1);                    //increase position of servo1 by 1 (0 is left, 90 is centre, 180 is right)
-    delay(10);                                // this delay is needed to prevent servo from going 0-180 without stopping
-  }
- 
-  else if(left > centre && right < centre)      // if light is towards centre
+  if (avt > avd)
   {
-    servo1.write(pos1 -1);                    // decrease position of servo1 by 1 (0 is left, 90 is centre, 180 is right)
-    delay(10);
+    servov = ++servov;
+     if (servov > servovLimitHigh) 
+     { 
+      servov = servovLimitHigh;
+     }
   }
- 
-  else
+  else if (avt < avd)
   {
-    servo1.write(pos1);                    // if neither condition is met, this means the panel is centre. Do not move panel
-  }
-                 
-                 // this portion is to control vertical position
-  if(up > centre && down < centre)
+    servov= --servov;
+    if (servov < servovLimitLow)
   {
-    servo2.write(pos2 +1);
-    delay(10);
+    servov = servovLimitLow;
   }
- 
-  else if(down > centre && up < centre)
+  }
+  vertical.write(servov);
+  }
+  
+  if (-1*tol > dhoriz || dhoriz > tol) // check if the diffirence is in the tolerance else change horizontal angle
   {
-    servo2.write(pos2 -1);
-    delay(10);
-  }
- 
-  else
+  if (avl > avr)
   {
-    servo2.write(pos2);
+    servoh = --servoh;
+    if (servoh < servohLimitLow)
+    {
+    servoh = servohLimitLow;
+    }
   }
- 
-}pp
+  else if (avl < avr)
+  {
+    servoh = ++servoh;
+     if (servoh > servohLimitHigh)
+     {
+     servoh = servohLimitHigh;
+     }
+  }
+  else if (avl = avr)
+  {
+    // nothing
+  }
+  horizontal.write(servoh);
+  }
+   delay(dtime);
+
+}
+
+
+
